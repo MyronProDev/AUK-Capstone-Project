@@ -1,0 +1,14 @@
+version: '3'
+services:
+  application:
+    build:
+      context: ../../../Downloads/time_series_forecasting_models
+      dockerfile: Dockerfile.streamlit
+    ports:
+      - "80:80"
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge
