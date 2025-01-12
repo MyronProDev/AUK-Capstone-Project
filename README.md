@@ -69,7 +69,7 @@ docker-compose build
 ```bash
 docker-compose up
 ```
-3. The application will be available at http://localhost.
+3. The application will be available at http://localhost:8080.
 
 ## Usage
 - Select data to load or load your own.
