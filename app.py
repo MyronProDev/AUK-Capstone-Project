@@ -103,38 +103,38 @@ def serve_pdf(file_path):
 
 # Streamlit додаток
 st.set_page_config(
-    page_title="Прогнозування часових рядів",
+    page_title="Time series forecasting",
     page_icon="📈"
 )
 
-st.title("Прогнозування часових рядів")
+st.title("Time series forecasting")
 tickers = get_tickers()
 
 # Завантаження даних
-st.sidebar.header("📂 Налаштування даних")
+st.sidebar.header("📂 Data settings")
 ticker = st.sidebar.selectbox(
-        "Тікер акцій",
+        "Stock ticker",
         tickers,
         index=tickers.index('AAPL')
     )
-start_date = st.sidebar.date_input("Початкова дата", pd.to_datetime("2010-01-01"))
+start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2010-01-01"))
 
 if "data" not in st.session_state:
     st.session_state["data"] = None
 
-if st.sidebar.button("Завантажити дані"):
+if st.sidebar.button("Download Data"):
     st.session_state["data"] = load_data(ticker, start_date)
 
 if st.session_state["data"] is not None:
     data = st.session_state["data"]
-    st.header("Завантажені дані:")
+    st.header("Downloaded data:")
     st.dataframe(yf.download(ticker, start=start_date).reset_index())
-    st.subheader("Візуалізація завантажених даних:")
+    st.subheader("Visualisation of downloaded data:")
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=data['date'], y=data['rate'].values.flatten(), mode='lines'))
     fig.update_layout(
-        xaxis_title="Дата",
-        yaxis_title="Ціна",
+        xaxis_title="Date",
+        yaxis_title="Price",
         template="plotly_white"
     )
 
@@ -145,14 +145,14 @@ if st.session_state["data"] is not None:
     df_train = data.iloc[:train_size]
     df_test = data.iloc[train_size:]
 
-    st.header("Розподіл на тестові та тренувальні дані:")
+    st.header("Splitting into test and training data:")
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=df_train['date'], y=df_train['rate'].values.flatten(), mode='lines', name='Тренувальні'))
-    fig.add_trace(go.Scatter(x=df_test['date'], y=df_test['rate'].values.flatten(), mode='lines', name='Тестові'))
+    fig.add_trace(go.Scatter(x=df_train['date'], y=df_train['rate'].values.flatten(), mode='lines', name='Training'))
+    fig.add_trace(go.Scatter(x=df_test['date'], y=df_test['rate'].values.flatten(), mode='lines', name='Testing'))
     fig.update_layout(
-        xaxis_title="Дата",
-        yaxis_title="Ціна",
-        legend_title="Легенда",
+        xaxis_title="Date",
+        yaxis_title="Price",
+        legend_title="Legend",
         template="plotly_white"
     )
 
@@ -178,9 +178,9 @@ if st.session_state["data"] is not None:
     if "model_choice" not in st.session_state:
         st.session_state["model_choice"] = "Random Forest"
 
-    st.sidebar.header("🔧 Вибір моделі")
+    st.sidebar.header("🔧 Model Settings")
     model_choice = st.sidebar.selectbox(
-        "Оберіть модель",
+        "Model",
         ["Random Forest", "Prophet", "Gradient Boosting", "LSTM", "GRU", "ARIMA", "SARIMA"],
         index=["Random Forest", "Prophet", "Gradient Boosting",
                "LSTM", "GRU", "ARIMA", "SARIMA"].index(st.session_state["model_choice"])
@@ -190,7 +190,7 @@ if st.session_state["data"] is not None:
     if "results" not in st.session_state:
         st.session_state["results"] = None
 
-    if st.sidebar.button("Запустити модель"):
+    if st.sidebar.button("Run the model"):
         if model_choice == "ARIMA":
             model = train_arima_model(df_train)
             forecast = predict_date_by_date(model, y_test_ml, ticker)
@@ -236,27 +236,27 @@ if st.session_state["data"] is not None:
         # Інтерактивний графік з Plotly
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=df_test['date'][:len(y_test_ml[ticker].values)], y=y_test_ml[ticker].values,
-                                 mode='lines', name='Реальні дані'))
+                                 mode='lines', name='Actual data'))
         fig.add_trace(go.Scatter(x=df_test['date'][:len(y_test_ml[ticker].values)], y=forecast, mode='lines',
-                                 name='Предбачені'))
-        st.header('Блок результатів передбачення')
-        st.subheader('Графік передбачення та тестових даних')
+                                 name='Predicted data'))
+        st.header('Prediction results block')
+        st.subheader('Prediction and test data graph')
         fig.update_layout(
-            xaxis_title="Дата",
-            yaxis_title="Ціна",
-            legend_title="Легенда",
+            xaxis_title="Date",
+            yaxis_title="Price",
+            legend_title="Legend",
             template="plotly_white"
         )
 
         st.plotly_chart(fig)
 
-        st.subheader('Метрики моделі')
+        st.subheader('Model metrics')
         metrics = {"RMSE": rmse, "MAPE": mape, "R2": r2}
         st.write(f"**RMSE: {rmse:.2f}**")
         st.write(f"MAPE: {mape:.2%}")
         st.write(f"R-квадрат: {r2:.2f}")
 
-        st.subheader('Таблиця передбачених та реальних даних')
+        st.subheader('Table of predicted and actual data')
         df_show = pd.DataFrame()
         df_show['date'] = df_test['date'][:len(y_test_ml[ticker].values)]
         df_show['actual'] = y_test_ml[ticker].values
@@ -269,12 +269,12 @@ if st.session_state["data"] is not None:
         }
         forecast_table = [{"actual": float(act), "forecast": float(fore)} for act, fore in zip(y_test_ml.values, forecast)]
         # Завантаження звіту
-        st.sidebar.header("Створення звіту")
-        if st.sidebar.button("Створити звіт"):
+        st.sidebar.header("Creating a report")
+        if st.sidebar.button("Create a report"):
             generate_pdf_report('forecasting_report.pdf', data_summary, model_choice, metrics, forecast_table, fig)
             pdf_data = serve_pdf('forecasting_report.pdf')
             st.sidebar.download_button(
-                label="Завантажити PDF звіт",
+                label="Download PDF report",
                 data=pdf_data,
                 file_name=f'{ticker}_{model_choice}_forecast_report.pdf',
                 mime='application/pdf'
